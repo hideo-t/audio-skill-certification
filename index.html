@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音響スキル認定システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 390px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 2px solid #00D1FF;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00D1FF, #ffffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .category-card {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            border-color: #00D1FF;
+            box-shadow: 0 8px 25px rgba(0, 209, 255, 0.2);
+        }
+
+        .category-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .category-desc {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00D1FF, #0099cc);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-container {
+            display: none;
+        }
+
+        .question-header {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .question-number {
+            font-size: 14px;
+            color: #00D1FF;
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+
+        .answer-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .answer-btn {
+            flex: 1;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 2px solid #333;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answer-btn:hover {
+            border-color: #00D1FF;
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+        }
+
+        .answer-btn.correct {
+            border-color: #00ff00;
+            background: linear-gradient(135deg, #1a3a1a, #2a4a2a);
+        }
+
+        .answer-btn.incorrect {
+            border-color: #ff0000;
+            background: linear-gradient(135deg, #3a1a1a, #4a2a2a);
+        }
+
+        .explanation {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .explanation h3 {
+            color: #00D1FF;
+            margin-bottom: 12px;
+        }
+
+        .next-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(45deg, #00D1FF, #0099cc);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 209, 255, 0.4);
+        }
+
+        .next-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#00D1FF 0deg, #00D1FF var(--score-deg), #333 var(--score-deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .score-inner {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .cert-number {
+            background: linear-gradient(135deg, #00D1FF, #0099cc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #00D1FF;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 209, 255, 0.2);
+            border-color: #00D1FF;
+        }
+
+        .learning-mode {
+            display: none;
+        }
+
+        .chapter {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chapter h2 {
+            color: #00D1FF;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .chapter h3 {
+            color: #ffffff;
+            margin: 16px 0 8px;
+            font-size: 16px;
+        }
+
+        .chapter p {
+            color: #ccc;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .chapter-quiz {
+            background: rgba(0, 209, 255, 0.1);
+            border: 1px solid #00D1FF;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .fallback-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="back-btn" onclick="goBack()" style="display: none;">←</div>
+        
+        <div id="home" class="home-container">
+            <div class="header">
+                <div class="logo">🎛️ 音響スキル認定システム</div>
+                <div class="subtitle">Professional Audio Skill Certification v2.0</div>
+            </div>
+
+            <div class="category-card" onclick="startCategory('beginner')">
+                <div class="category-icon">🔰</div>
+                <div class="category-title">初心者認定</div>
+                <div class="category-desc">基礎動作・理論・PC基礎・ワイヤレス</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+
+            <div class="category-card" onclick="startCategory('intermediate')">
+                <div class="category-icon">🟡</div>
+                <div class="category-title">中級者認定</div>
+                <div class="category-desc">システム設計・ミキシング・トラブル対応</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+
+            <div class="category-card" onclick="startCategory('manager')">
+                <div class="category-icon">🔵</div>
+                <div class="category-title">管理者（プロ）認定</div>
+                <div class="category-desc">経営・教育・安全・高度技術</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+
+            <div class="category-card" onclick="startCategory('instrument')">
+                <div class="category-icon">🎼</div>
+                <div class="category-title">楽器の知識認定</div>
+                <div class="category-desc">ドラム・ギター・ピアノ・管楽器・弦楽器</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+
+            <div class="category-card" onclick="startCategory('daw')">
+                <div class="category-icon">💻</div>
+                <div class="category-title">DAWの知識認定</div>
+                <div class="category-desc">デジタル音響・ミキシング・MIDI・マスタリング</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+        </div>
+
+        <div id="learning" class="learning-mode">
+            <div class="chapter">
+                <h2>学習モード</h2>
+                <div id="learning-content"></div>
+                <button class="next-btn" onclick="startQuiz()">確認クイズに進む</button>
+            </div>
+        </div>
+
+        <div id="quiz" class="quiz-container">
+            <div class="question-header">
+                <div class="question-number" id="question-number">問題 1/20</div>
+                <div class="question-text" id="question-text"></div>
+            </div>
+
+            <div class="answer-buttons">
+                <button class="answer-btn" onclick="selectAnswer(true)">○</button>
+                <button class="answer-btn" onclick="selectAnswer(false)">×</button>
+            </div>
+
+            <div class="explanation" id="explanation">
+                <h3>解説</h3>
+                <p id="explanation-text"></p>
+            </div>
+
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()" disabled>次の問題</button>
+        </div>
+
+        <div id="result" class="quiz-container">
+            <div class="score-display">
+                <div class="score-circle" id="score-circle">
+                    <div class="score-inner" id="score-text"></div>
+                </div>
+                <h2 id="result-title"></h2>
+                <p id="result-message"></p>
+                <div class="cert-number" id="cert-number" style="display: none;"></div>
+            </div>
+            <button class="next-btn" onclick="goHome()">ホームに戻る</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = {
+            beginner: [
+                {id: 'BEG_CBL_001', text: '音響ケーブルは、8の字に巻くのが正しい巻き方である。', correct: true, explanation: '8の字巻き（オーバーアンダー）はケーブルのよりを戻さず、断線防止になる。現場の基本。'},
+                {id: 'BEG_CBL_002', text: 'ケーブルリールは、完全に解かずにドラムの状態で通電しても問題ない。', correct: false, explanation: 'コイル状のまま通電するとインダクタンスによる発熱、最悪火災の原因。必ず全伸長する。'},
+                {id: 'BEG_CBL_003', text: 'XLRケーブルの1番ピンはグラウンド、2番ピンはホット、3番ピンはコールドである。', correct: true, explanation: '業界標準ピンアサイン。これが逆のケーブルは位相が反転する。'},
+                {id: 'BEG_STD_001', text: 'マイクスタンドは、脚を閉じたまま立てても安定する。', correct: false, explanation: '脚は最大限開く。閉じた状態は転倒リスク、マイク破損の原因。'},
+                {id: 'BEG_STD_002', text: 'マイクケーブルはスタンドに巻き付け、1m程度の余りを残すのが適切である。', correct: true, explanation: 'タケノコ巻き。踏まれ防止、断線防止、かつ演奏者の動きを妨げない。'},
+                {id: 'BEG_THY_001', text: 'シグナルフローは「マイク→ミキサー→アンプ→スピーカー」の順である。', correct: true, explanation: '音響システムの絶対原則。この順序を理解していないとトラブル対応不可。'},
+                {id: 'BEG_THY_002', text: 'デジタルミキサーで音が出ない場合、最初に確認するのはゲインである。', correct: false, explanation: '最初はフェーダー、次にゲイン、その次パッチ。信号の流れの逆順で確認。'},
+                {id: 'BEG_GAIN_001', text: 'デジタルミキサーでは、メーターが0dBFSを指すのが適正レベルである。', correct: false, explanation: '0dBFSはクリッピング（歪み）の一歩手前。適正は-18dBFS〜-12dBFS。'},
+                {id: 'BEG_SPK_001', text: 'パワードスピーカーは、アンプを内蔵している。', correct: true, explanation: '電源ケーブルと信号ケーブルのみで動作。パッシブは別途アンプ必要。'},
+                {id: 'BEG_EQ_001', text: 'EQは、音質を変えるだけの機能であり、ハウリング対策には使えない。', correct: false, explanation: 'ハウリング周波数をカットするのがEQの主要用途の一つ。'},
+                {id: 'BEG_PC_001', text: 'Windowsのファイル拡張子は、デフォルトでは非表示である。', correct: true, explanation: '非表示設定。トラブル時に拡張子を表示する操作は必須スキル。'},
+                {id: 'BEG_PC_002', text: 'Dante Controllerは、有料のソフトウェアである。', correct: false, explanation: 'Audinate公式から無料ダウンロード。誰でも学習可能。'},
+                {id: 'BEG_WLS_001', text: 'ワイヤレスマイクの電池は、リハーサルで使ったものは本番でも使い回せる。', correct: false, explanation: '本番前は必ず新品交換。インジケータは正確ではなく、本番中の突然死リスク。'},
+                {id: 'BEG_WLS_002', text: 'ワイヤレスシステムの周波数スキャンは、電波の空いているチャンネルを探す機能である。', correct: true, explanation: '会場によって使用可能周波数は異なる。スキャンは必須作業。'},
+                {id: 'BEG_COM_001', text: 'リハーサルは、トリ（最後の出演者）から行うのが効率的である。', correct: true, explanation: '逆リハ。本番直前に待機時間が短くなり、コンディション維持。'},
+                {id: 'BEG_COM_002', text: 'ステージ上の「バミる」とは、立ち位置をテープでマーキングすることである。', correct: true, explanation: '現場用語。英語の「bumming」ではなく和製英語。'},
+                {id: 'BEG_PHASE_001', text: '同一信号を逆相で合成すると、音量が2倍になる。', correct: false, explanation: '理論上は完全キャンセル（無音）。実際は位相干渉で音が痩せる。'},
+                {id: 'BEG_PC_003', text: 'Wi-FiのSSIDは、同じ会場内で重複していても問題ない。', correct: false, explanation: '干渉、接続不安定の原因。現場では固有のSSID設定がマナー。'},
+                {id: 'BEG_WLS_003', text: 'ワイヤレスマイクは、見通しが良ければ100m以上離れても使える。', correct: true, explanation: '理論上は可能。ただしドロップアウト（瞬間切断）リスクあり。'},
+                {id: 'BEG_COM_003', text: '音響機材の運搬では、重いものは上から積むのが基本である。', correct: false, explanation: '重いものは下。重心を低くし、転倒・破損防止。'}
+            ],
+            intermediate: [
+                {id: 'INT_SYS_001', text: '音速は、気温15℃で約340m/sである。', correct: true, explanation: '遅延計算の基本。1m≒2.94ms。気温が高いほど音速は速くなる。'},
+                {id: 'INT_SYS_002', text: '遅延スピーカーは、メインスピーカーより早く鳴らす必要がある。', correct: false, explanation: '距離が遠い分遅らせる。同位相で到達させるため。'},
+                {id: 'INT_EQ_001', text: 'ボーカルの「こもり」は、250Hz〜500Hzをカットすることで改善する。', correct: true, explanation: 'こもりの原因はこの帯域の過多。削ると抜けが出る。'},
+                {id: 'INT_EQ_002', text: 'キックドラムの「パンチ」は、60Hzをブーストすることで得られる。', correct: false, explanation: '60Hzは重低感。パンチは3kHz〜5kHzのアタック帯域。'},
+                {id: 'INT_CMP_001', text: 'コンプレッサーのアタックタイムを遅くすると、過渡応答（アタック音）が残る。', correct: true, explanation: 'アタック音が通過した後から圧縮開始。ドラムで多用。'},
+                {id: 'INT_RVB_001', text: 'リバーブのプリディレイは、直接音と残響音の間の無音時間である。', correct: true, explanation: '時間差をつけることで音像の距離感、奥行きを表現。'},
+                {id: 'INT_FB_001', text: 'ハウリングが発生した場合、最初にゲインを下げるべきである。', correct: false, explanation: 'ゲインよりEQで該当周波数をカット。ゲイン全域は音質劣化。'},
+                {id: 'INT_NET_001', text: 'IPアドレス192.168.1.10/24は、サブネットマスク255.255.255.0と同義である。', correct: true, explanation: '/24 = 255.255.255.0。CIDR表記の理解必須。'},
+                {id: 'INT_SYS_003', text: 'サブウーファーのクロスオーバー周波数は、一般的に80Hz〜120Hzに設定される。', correct: true, explanation: '80Hz以下をサブウーファー、以上をメインSP。JBL、Meyer等の標準値。'},
+                {id: 'INT_EQ_003', text: 'スネアドラムの「鳴り」は、150Hz〜250Hzに存在する。', correct: true, explanation: 'シェルの共鳴帯域。この帯域を削ると音が細くなる。'},
+                {id: 'INT_CMP_002', text: 'リリースタイムを短くしすぎると、音が「息継ぎ」しているように聞こえる。', correct: true, explanation: '圧縮の掛かり/解除が早すぎて不自然になる。'},
+                {id: 'INT_RVB_002', text: 'BPM120の曲では、16分音符プリディレイは125msである。', correct: true, explanation: '60,000/120=500ms(1拍)、その1/4=125ms。'},
+                {id: 'INT_FB_002', text: '1kHzのハウリングは、「キンキン」した耳障りな音に聞こえる。', correct: true, explanation: '中域ハウリング。ボーカル帯域と重なるため厄介。'},
+                {id: 'INT_NET_002', text: 'Danteのクロックマスターは、最もスペックの高い機器を手動設定すべきである。', correct: false, explanation: '自動選出に任せるのが基本。ただし優先度設定は可能。'},
+                {id: 'INT_SYS_004', text: 'スピーカーの能率（感度）は、1W、1mで何dBの音圧が得られるかを示す。', correct: true, explanation: '例：97dB/W/m。この数値が高いほど、少ない電力で大きな音が出る。'},
+                {id: 'INT_EQ_004', text: 'ベースギターの「ボワつき」は、100Hz〜200Hzのカットで改善する。', correct: true, explanation: 'この帯域が過多だと定位がぼやけ、他の楽器と被る。'},
+                {id: 'INT_CMP_003', text: 'レシオ∞:1のコンプレッサーは、リミッターと呼ばれる。', correct: true, explanation: 'スレッショルドを超えた信号を絶対に通さない。マスタリング用。'},
+                {id: 'INT_DLY_001', text: 'ディレイのフィードバックを上げると、反復回数が増える。', correct: true, explanation: '出力を入力に戻す量。100%にすると無限にループ。'},
+                {id: 'INT_NOISE_001', text: 'ハムノイズ（ブーン）の原因は、ほぼ100%がアースループである。', correct: false, explanation: 'アースループが最多だが、蛍光灯、DMX、電源品質も原因。'},
+                {id: 'INT_NET_003', text: 'Danteでは、サンプリングレートの異なる機器を混在させることができない。', correct: true, explanation: '全機器同一SR必須。96kHzと48kHzは混在不可。'}
+            ],
+            manager: [
+                {id: 'PRO_MGT_001', text: '減価償却とは、機材の購入価格を一度に経費計上することである。', correct: false, explanation: '耐用年数で分割計上。100万円の機材を5年で20万円/年。'},
+                {id: 'PRO_EDU_001', text: 'OJTは「見て覚えろ」が最も効果的である。', correct: false, explanation: '意図説明→実演→実施→振り返りのサイクルが科学的に有効。'},
+                {id: 'PRO_SAFE_001', text: '野外フェスでは、雷鳴が聞こえたら即座に音響システムを停止し、避難誘導する。', correct: true, explanation: '人命優先。機材破損より観客・スタッフの安全。'},
+                {id: 'PRO_NET_001', text: 'VLANは、物理的にスイッチを分離しなければ実現できない。', correct: false, explanation: '論理分割。1台のスイッチで複数ネットワーク。'},
+                {id: 'PRO_SMA_001', text: 'Smaartの位相トレースは、直線に近いほど位相干渉が少ない。', correct: true, explanation: '理想はフラットな位相。ぐちゃぐちゃは問題あり。'},
+                {id: 'PRO_LGE_001', text: 'フェスのステージ転換は、5分を切るのがプロの基準である。', correct: true, explanation: 'ヘッドライナー後の制限時間。事前準備、役割分担が鍵。'},
+                {id: 'PRO_ETH_001', text: '他社の見積もり金額を探り、それより安く受注するのは正当な競争である。', correct: false, explanation: '不当な安値受注は業界全体の価値低下。技術提案で勝負。'},
+                {id: 'PRO_MGT_002', text: '見積もりの値引き要求には、原価を下げずに応じるのがプロである。', correct: false, explanation: '値引き＝利益減少。内容削減（人員、機材）の提案が適切。'},
+                {id: 'PRO_EDU_002', text: 'フィードバックは、「良かった点」「改善点」の順で伝えると受け入れられやすい。', correct: true, explanation: 'サンドイッチ法。最初に否定から入ると防衛的になる。'},
+                {id: 'PRO_SAFE_002', text: '吊り込みの安全荷重は、機材重量の2倍以上の余裕を見るのが基準である。', correct: true, explanation: '安全率2以上。ワイヤー、シャックル、トラスの定格確認必須。'},
+                {id: 'PRO_NET_002', text: 'DanteのQoS設定で、DSCP値46はEF（Expedited Forwarding）を意味する。', correct: true, explanation: 'ネットワークエンジニアとの共通言語。'},
+                {id: 'PRO_SMA_002', text: '周波数特性がフラットなら、音は必ず良い音になる。', correct: false, explanation: 'フラット≠良い音。音楽的要素、好み、会場特性とのバランス。'},
+                {id: 'PRO_LGE_002', text: 'ライジング（吊り込み）作業は、無資格者でも可能である。', correct: false, explanation: '墜落制止用器具、安全帯の正しい使用法教育必須。'},
+                {id: 'PRO_ETH_002', text: 'アーティストやマネージャーとの個人的関係構築は、ビジネス上有利になる。', correct: true, explanation: 'ただし公私混同は厳禁。プロフェッショナル距離感。'},
+                {id: 'PRO_MGT_003', text: '機材のレンタル料金は、購入価格の1/30〜1/50が月額相場である。', correct: true, explanation: '100万円の機材なら2〜3万円/月。5年で回収する計算。'},
+                {id: 'PRO_EDU_003', text: '新人教育では、失敗をさせないことが最も重要である。', correct: false, explanation: '安全な範囲での失敗は成長に不可欠。本番以外で経験させる。'},
+                {id: 'PRO_SAFE_003', text: '電源容量計算は、ブレーカーが落ちなければ適正である。', correct: false, explanation: '落ちる前の限界運用は発熱・火災リスク。80%ルール。'},
+                {id: 'PRO_NET_003', text: 'マルチキャストトラフィックは、IGMPスヌーピングで抑制できる。', correct: true, explanation: '必要なポートにのみ配信。スイッチ負荷軽減。'},
+                {id: 'PRO_SMA_003', text: 'RT60は、残響時間を測定する指標である。', correct: true, explanation: '60dB減衰する時間。会場の「響き」の客観評価。'},
+                {id: 'PRO_ETH_003', text: 'リハーサルの音源を無断でSNSにアップしても問題ない。', correct: false, explanation: '肖像権、著作権、公開前コンテンツ。絶対禁止。'}
+            ],
+            instrument: [
+                {id: 'INS_DRM_001', text: 'スネアドラムの響き線（スナッピー）の音は、5kHz〜8kHzに集中する。', correct: true, explanation: '金属振動。この帯域をブーストするとザラつき強調。'},
+                {id: 'INS_BSS_001', text: 'ベースギターの開放E弦の基本周波数は、約41Hzである。', correct: true, explanation: '40Hz台。サブウーファーの存在意義。'},
+                {id: 'INS_EGT_001', text: '歪みギターは、100Hz〜200Hzをブーストすると迫力が出る。', correct: false, explanation: '歪みギター最大の敵は低域の濁り。カットが正解。'},
+                {id: 'INS_ACG_001', text: 'アコースティックギターのマイク位置は、サウンドホール直撃が最適である。', correct: false, explanation: '直撃は低域過多、こもり。12フレット付近が黄金律。'},
+                {id: 'INS_PNO_001', text: 'ピアノは、88鍵全てが独立した周波数を持つ打弦楽器である。', correct: true, explanation: '27.5Hz〜4,186Hz。フルレンジ楽器の代表格。'},
+                {id: 'INS_WND_001', text: 'トランペットは、ベル真正面が最もバランス良く録音できる。', correct: false, explanation: '真正面は爆音、かつ超高域強調。側面〜ややオフが標準。'},
+                {id: 'INS_STR_001', text: 'コントラバスは、fホールに向けてマイキングするのが基本である。', correct: true, explanation: '音の出る穴。ただし近すぎるとこもり。'},
+                {id: 'INS_PER_001', text: 'コンガは、ヘッド中央とエッジで音色が異なる。', correct: true, explanation: '中央：低く深い、エッジ：高く鋭い。'},
+                {id: 'INS_DRM_002', text: 'キックドラムの内側マイクと外側マイクは、必ず同位相で使用する。', correct: false, explanation: '多くの場合、外側を逆相にすると低域が太くなる。要確認。'},
+                {id: 'INS_BSS_002', text: 'エレキベースは、DIのみの方がアンプマイクより音が良い。', correct: false, explanation: 'プロはDIとマイクをミックス。DIの安定感＋アンプの質感。'},
+                {id: 'INS_EGT_002', text: 'シングルコイルピックアップは、ハムバッカーよりノイズに弱い。', correct: true, explanation: '60サイクルハム。ハムバッカーは逆相コイルでノイズキャンセル。'},
+                {id: 'INS_ACG_002', text: 'ピエゾピックアップは、打楽器的なアタック音を拾うのが得意である。', correct: true, explanation: 'ブリッジ直下の振動。生音とは異なる質感。'},
+                {id: 'INS_PNO_002', text: 'グランドピアノとアップライトピアノでは、弦の向きが異なる。', correct: true, explanation: 'グランド：水平、アップライト：垂直。響きの違い。'},
+                {id: 'INS_WND_002', text: 'サックスは、ベルから放射される音と、キー音が両方重要な音源である。', correct: true, explanation: 'メカノイズも「生々しさ」の一部。過度な除去は不自然。'},
+                {id: 'INS_STR_002', text: 'バイオリンは、無伴奏ソロとオーケストラではマイキング手法が異なる。', correct: true, explanation: 'ソロ：近接、オケ：セクション全体。'},
+                {id: 'INS_PER_002', text: 'タンバリンは、過渡応答が非常に速い楽器である。', correct: true, explanation: 'アタックの立ち上がり。コンプで潰さない注意。'},
+                {id: 'INS_DRM_003', text: 'タムタムのチューニングは、キックドラムより高い音程に設定するのが一般的である。', correct: true, explanation: 'フロアタムは低め、ラックタムは高め。メロディックに並べる。'},
+                {id: 'INS_BSS_003', text: 'ベースアンプのキャビネットは、密閉型と位相反転型がある。', correct: true, explanation: '密閉型：タイトな低音。位相反転型：量感のある低音。'},
+                {id: 'INS_EGT_003', text: 'ギターアンプの歪みは、プリアンプ段とパワーアンプ段で性質が異なる。', correct: true, explanation: 'プリアンプ歪み：シャープ、パワーアンプ歪み：コンプ感。'},
+                {id: 'INS_WND_003', text: 'フルートは、無指向性に近い特性を持つ。', correct: true, explanation: '音の放射方向が複雑。マイク位置の難しさ。'}
+            ],
+            daw: [
+                {id: 'DAW_BAS_001', text: 'サンプリングレート44.1kHzは、22.05kHzまでの周波数を記録できる。', correct: true, explanation: 'ナイキスト周波数 = SR/2。人間の可聴帯域をカバー。'},
+                {id: 'DAW_OP_001', text: 'トラックは、MIDIトラックとオーディオトラックに大別される。', correct: true, explanation: 'MIDIは演奏情報、オーディオは音声波形。'},
+                {id: 'DAW_MIX_001', text: 'AUXセンドは、エフェクト用に信号を分岐する機能である。', correct: true, explanation: 'リバーブ、ディレイを掛ける並列回路。'},
+                {id: 'DAW_PLG_001', text: 'リミッターは、コンプレッサーの一種である。', correct: true, explanation: 'レシオ∞（無限大）のコンプレッサー。ピーク抑制。'},
+                {id: 'DAW_MIDI_001', text: 'MIDIは、音声信号そのものを伝送する規格である。', correct: false, explanation: '演奏情報（ノート番号、ベロシティ等）を伝送。'},
+                {id: 'DAW_LUF_001', text: 'ストリーミング配信のラウドネス基準は、-14 LUFSが主流である。', correct: true, explanation: 'Spotify、Apple Music等。CDよりかなり小さい。'},
+                {id: 'DAW_PRAC_001', text: 'ライブPAで使うSE（効果音）は、WAV形式が望ましい。', correct: true, explanation: 'MP3は圧縮遅延、品質不安。WAV一択。'},
+                {id: 'DAW_BAS_002', text: '96kHz録音は、44.1kHzより必ず音質が良い。', correct: false, explanation: '可聴帯域外の効果は不明。プラグイン処理の精度向上はメリット。'},
+                {id: 'DAW_OP_002', text: 'オートメーションは、フェーダーやEQの動きを記憶させる機能である。', correct: true, explanation: '曲中で音量変化、パン移動など。'},
+                {id: 'DAW_MIX_002', text: 'インサートは、トラック全体にエフェクトを直接挿入する機能である。', correct: true, explanation: 'コンプレッサー、EQなど。直列回路。'},
+                {id: 'DAW_PLG_002', text: 'マルチバンドコンプは、周波数帯域ごとに圧縮特性を変えられる。', correct: true, explanation: '低域だけ圧縮強く、高域はそのまま、等が可能。'},
+                {id: 'DAW_MIDI_002', text: 'MTC（MIDI Time Code）は、タイムコード同期に使われる。', correct: true, explanation: 'SMPTEタイムコードのMIDI版。'},
+                {id: 'DAW_LUF_002', text: 'LUFSは、人間の聴覚特性を考慮したラウドネス測定単位である。', correct: true, explanation: 'K加重フィルター。単なるピークではない。'},
+                {id: 'DAW_PRAC_002', text: 'クリックトラックは、バンド全員が同じ遅延で聴こえればテンポは合う。', correct: false, explanation: '個々の機器遅延差でズレる。有線推奨。'},
+                {id: 'DAW_BAS_003', text: 'ビット深度が深いほど、ダイナミックレンジが広がる。', correct: true, explanation: '16bit=96dB、24bit=144dB。無音部のノイズフロア低下。'},
+                {id: 'DAW_OP_003', text: 'バウンスとは、複数トラックを1つのオーディオファイルに書き出すことである。', correct: true, explanation: 'ステム作成、最終ミックスダウン。'},
+                {id: 'DAW_MIX_003', text: 'グループトラックは、複数トラックを一括制御するためのバスである。', correct: true, explanation: 'ドラム全体の圧縮、ボーカル全体のリバーブ等。'},
+                {id: 'DAW_PLG_003', text: 'ディエッサーは、特定の高域（歯擦音）を抑制するコンプレッサーである。', correct: true, explanation: '5kHz〜8kHz。ボーカルの「サ行」対策。'},
+                {id: 'DAW_MIDI_003', text: 'Ableton Linkは、Wi-Fi/有線LAN経由でテンポ同期ができる。', correct: true, explanation: 'ライブ現場、複数PCでのセッションに有用。'},
+                {id: 'DAW_LUF_003', text: 'マスタリングでは、0dBFSを超えるピークは絶対に許されない。', correct: true, explanation: 'CD、WAVファイルは0dBFSが上限。クリッピング。'}
+            ]
+        };
+
+        const learningContent = {
+            beginner: `
+                <h3>🎛️ 初心者認定 学習内容</h3>
+                <p>音響業界での基礎となる知識と技術を学習します。</p>
+                
+                <h4>A. 基礎動作</h4>
+                <p>• ケーブルの正しい巻き方（8の字巻き）</p>
+                <p>• マイクスタンドの安全な設営</p>
+                <p>• テープ養生のテクニック</p>
+                <p>• 電源管理の基本</p>
+                
+                <h4>B. 基礎理論</h4>
+                <p>• シグナルフローの理解</p>
+                <p>• ゲイン構造とレベル管理</p>
+                <p>• スピーカーシステムの基本</p>
+                <p>• EQの基礎概念</p>
+                
+                <h4>C. PC基礎</h4>
+                <p>• ファイル管理の基本</p>
+                <p>• ネットワーク設定</p>
+                <p>• Danteシステムの概要</p>
+                
+                <h4>D. ワイヤレス基礎</h4>
+                <p>• バッテリー管理</p>
+                <p>• 周波数調整</p>
+                <p>• アンテナ配置</p>
+            `,
+            intermediate: `
+                <h3>🟡 中級者認定 学習内容</h3>
+                <p>現場で実践的に使える技術スキルを習得します。</p>
+                
+                <h4>A. システム設計</h4>
+                <p>• SPL計算と音圧設計</p>
+                <p>• 遅延スピーカーの配置</p>
+                <p>• 位相問題の理解と対策</p>
+                
+                <h4>B. ミキシング技術</h4>
+                <p>• EQ帯域戦略</p>
+                <p>• コンプレッサーの実践的運用</p>
+                <p>• 空間系エフェクトの活用</p>
+                
+                <h4>C. トラブルシューティング</h4>
+                <p>• ハウリング対策</p>
+                <p>• ノイズ除去技術</p>
+                <p>• 緊急時の対応手順</p>
+                
+                <h4>D. ネットワーク基礎</h4>
+                <p>• Danteの実践運用</p>
+                <p>• IPアドレス管理</p>
+                <p>• ネットワーク機器設定</p>
+            `,
+            manager: `
+                <h3>🔵 管理者（プロ）認定 学習内容</h3>
+                <p>技術者から管理者・経営者へのステップアップを目指します。</p>
+                
+                <h4>A. 経営・事業管理</h4>
+                <p>• 機材の減価償却計算</p>
+                <p>• 見積もり作成と原価管理</p>
+                <p>• キャッシュフロー管理</p>
+                
+                <h4>B. 教育・人材育成</h4>
+                <p>• OJT設計と実施</p>
+                <p>• 効果的なフィードバック方法</p>
+                <p>• 技術伝承システム</p>
+                
+                <h4>C. 安全管理</h4>
+                <p>• リスクアセスメント</p>
+                <p>• 安全荷重計算</p>
+                <p>• 緊急時対応プロトコル</p>
+                
+                <h4>D. 高度ネットワーク</h4>
+                <p>• VLAN設計</p>
+                <p>• QoS設定</p>
+                <p>• セキュリティ対策</p>
+            `,
+            instrument: `
+                <h3>🎼 楽器の知識認定 学習内容</h3>
+                <p>楽器の音響特性を理解し、適切な収音技術を学びます。</p>
+                
+                <h4>A. ドラムセット</h4>
+                <p>• 各パートの周波数特性</p>
+                <p>• マイキング技法</p>
+                <p>• チューニングと音作り</p>
+                
+                <h4>B. ベース・ギター</h4>
+                <p>• DI活用法</p>
+                <p>• アンプとの使い分け</p>
+                <p>• エフェクト処理</p>
+                
+                <h4>C. 鍵盤楽器</h4>
+                <p>• ピアノの構造と音響特性</p>
+                <p>• シンセサイザーの接続</p>
+                <p>• ステレオ処理の考え方</p>
+                
+                <h4>D. 管・弦楽器</h4>
+                <p>• 指向性の理解</p>
+                <p>• 距離感とマイク選択</p>
+                <p>• アコースティック楽器の特徴</p>
+            `,
+            daw: `
+                <h3>💻 DAWの知識認定 学習内容</h3>
+                <p>デジタル音響技術とDAW操作を習得します。</p>
+                
+                <h4>A. デジタル音響基礎</h4>
+                <p>• サンプリングレートとビット深度</p>
+                <p>• ファイルフォーマットの選択</p>
+                <p>• バッファ設定とレイテンシー</p>
+                
+                <h4>B. DAW操作</h4>
+                <p>• トラック管理</p>
+                <p>• オートメーション</p>
+                <p>• ミックスダウン手順</p>
+                
+                <h4>C. プラグイン活用</h4>
+                <p>• EQとダイナミクス処理</p>
+                <p>• 空間系エフェクト</p>
+                <p>• マスタリング基礎</p>
+                
+                <h4>D. 実務連携</h4>
+                <p>• ライブ収録システム</p>
+                <p>• クリック配信</p>
+                <p>• ファイル受け渡し規格</p>
+            `
+        };
+
+        let currentCategory = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answeredQuestions = [];
+        let selectedQuestions = [];
+        let hasAnswered = false;
+
+        function startCategory(category) {
+            currentCategory = category;
+            currentQuestionIndex = 0;
+            score = 0;
+            answeredQuestions = [];
+            hasAnswered = false;
+            
+            // 20問をランダム選択
+            const allQuestions = questions[category].slice();
+            selectedQuestions = [];
+            
+            for (let i = 0; i < Math.min(20, allQuestions.length); i++) {
+                const randomIndex = Math.floor(Math.random() * allQuestions.length);
+                selectedQuestions.push(allQuestions.splice(randomIndex, 1)[0]);
+            }
+            
+            showLearning();
+        }
+
+        function showLearning() {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('learning').style.display = 'block';
+            document.querySelector('.back-btn').style.display = 'flex';
+            
+            document.getElementById('learning-content').innerHTML = learningContent[currentCategory];
+        }
+
+        function startQuiz() {
+            document.getElementById('learning').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= selectedQuestions.length) {
+                showResult();
+                return;
+            }
+            
+            const question = selectedQuestions[currentQuestionIndex];
+            document.getElementById('question-number').textContent = `問題 ${currentQuestionIndex + 1}/${selectedQuestions.length}`;
+            document.getElementById('question-text').textContent = question.text;
+            document.getElementById('explanation').style.display = 'none';
+            document.getElementById('next-btn').disabled = true;
+            
+            // ボタンリセット
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('correct', 'incorrect');
+            });
+            
+            hasAnswered = false;
+        }
+
+        function selectAnswer(userAnswer) {
+            if (hasAnswered) return;
+            
+            hasAnswered = true;
+            const question = selectedQuestions[currentQuestionIndex];
+            const isCorrect = userAnswer === question.correct;
+            
+            if (isCorrect) {
+                score++;
+            }
+            
+            // ボタンの色を変更
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach((btn, index) => {
+                const btnAnswer = index === 0; // ○ボタンはtrue、×ボタンはfalse
+                if (btnAnswer === question.correct) {
+                    btn.classList.add('correct');
+                } else if (btnAnswer === userAnswer && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+            });
+            
+            // 解説を表示
+            document.getElementById('explanation-text').textContent = question.explanation;
+            document.getElementById('explanation').style.display = 'block';
+            document.getElementById('next-btn').disabled = false;
+            
+            answeredQuestions.push({
+                question: question.text,
+                userAnswer: userAnswer,
+                correctAnswer: question.correct,
+                correct: isCorrect
+            });
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            showQuestion();
+        }
+
+        function showResult() {
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            
+            const percentage = Math.round((score / selectedQuestions.length) * 100);
+            const passed = percentage >= 80;
+            
+            document.getElementById('score-text').textContent = `${percentage}%`;
+            document.getElementById('score-circle').style.setProperty('--score-deg', `${(percentage / 100) * 360}deg`);
+            
+            if (passed) {
+                document.getElementById('result-title').textContent = '🎉 認定合格！';
+                document.getElementById('result-message').textContent = '素晴らしい成績です！認定番号を発行しました。';
+                
+                const certNumber = generateCertNumber();
+                document.getElementById('cert-number').textContent = `認定番号: ${certNumber}`;
+                document.getElementById('cert-number').style.display = 'block';
+                
+                // 進捗を保存
+                saveCertification(certNumber);
+            } else {
+                document.getElementById('result-title').textContent = '😔 残念！';
+                document.getElementById('result-message').textContent = `合格には80%以上が必要です。もう一度チャレンジしてください。正解数: ${score}/${selectedQuestions.length}`;
+                document.getElementById('cert-number').style.display = 'none';
+            }
+        }
+
+        function generateCertNumber() {
+            const categoryCode = {
+                beginner: 'BEG',
+                intermediate: 'INT',
+                manager: 'MGR',
+                instrument: 'INS',
+                daw: 'DAW'
+            }[currentCategory];
+            
+            const timestamp = Date.now().toString().slice(-6);
+            return `PA-${categoryCode}-2025-${timestamp}`;
+        }
+
+        function saveCertification(certNumber) {
+            const certifications = JSON.parse(localStorage.getItem('certifications') || '{}');
+            certifications[currentCategory] = {
+                number: certNumber,
+                date: new Date().toISOString(),
+                score: Math.round((score / selectedQuestions.length) * 100)
+            };
+            localStorage.setItem('certifications', JSON.stringify(certifications));
+        }
+
+        function loadProgress() {
+            const certifications = JSON.parse(localStorage.getItem('certifications') || '{}');
+            
+            Object.keys(certifications).forEach(category => {
+                const card = document.querySelector(`[onclick="startCategory('${category}')"]`);
+                if (card) {
+                    const progressFill = card.querySelector('.progress-fill');
+                    progressFill.style.width = '100%';
+                    
+                    const desc = card.querySelector('.category-desc');
+                    desc.innerHTML = `✅ 合格済み (${certifications[category].score}%)<br><small>${certifications[category].number}</small>`;
+                }
+            });
+        }
+
+        function goBack() {
+            if (document.getElementById('result').style.display === 'block') {
+                goHome();
+            } else if (document.getElementById('quiz').style.display === 'block') {
+                showLearning();
+            } else if (document.getElementById('learning').style.display === 'block') {
+                goHome();
+            }
+        }
+
+        function goHome() {
+            document.getElementById('home').style.display = 'block';
+            document.getElementById('learning').style.display = 'none';
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            document.querySelector('.back-btn').style.display = 'none';
+        }
+
+        // 初期化
+        window.onload = function() {
+            loadProgress();
+        };
+    </script>
+</body>
+</html>
